@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Transcript & Summary Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #003049, #001521);
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .container {
+            background: #eae2b7;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 10px;
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #d62828;
+            text-align: center;
+        }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        input, select {
+            flex: 1;
+            max-width: 70%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            color: white;
+            background-color: #d62828;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #b51d1d;
+            transform: translateY(-2px);
+        }
+
+        /* Loading Bar */
+        .loading-container {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .loading-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background-color: #d62828;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        .loading-text {
+            margin-top: 10px;
+            color: #d62828;
+            font-weight: 500;
+        }
+
+        /* Output */
+        .output-container {
+            margin-top: 30px;
+        }
+        .output {
+            margin-top: 20px;
+            text-align: left;
+            background: #f7f7f7;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            word-wrap: break-word;
+        }
+        .output h2 {
+            color: #d62828;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .output p {
+            margin: 0 0 10px;
+            line-height: 1.6;
+        }
+
+        /* Download Buttons */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .download-btn {
+            background-color: #28a745;
+        }
+        .download-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            input, select {
+                max-width: 100%;
+            }
+            .output {
+                max-height: 200px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Transcript & Summary Generator</h1>
+        <form method="POST" action="/" id="transcript-form">
+            <div class="input-group">
+                <input type="url" name="video_url" placeholder="Enter YouTube video URL" required>
+                <select name="summary_length">
+                    <option value="short">Short Summary</option>
+                    <option value="medium" selected>Medium Summary</option>
+                    <option value="long">Long Summary</option>
+                </select>
+                <button type="submit">Generate</button>
+            </div>
+        </form>
+
+        <!-- Loading Bar -->
+        <div class="loading-container" id="loading-container">
+            <div class="loading-bar">
+                <div class="loading-progress" id="loading-progress"></div>
+            </div>
+            <div class="loading-text">Processing video... <span id="progress-percentage">0%</span></div>
+        </div>
+        
+        <div class="output-container">
+            {% if summary %}
+            <div class="output">
+                <h2>Summary</h2>
+                <p>{{ summary }}</p>
+                <div class="button-group">
+                    <button class="download-btn" onclick="downloadSummary()">Download Summary</button>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if transcript %}
+            <div class="output">
+                <h2>Full Transcript</h2>
+                <p>{{ transcript }}</p>
+                <div class="button-group">
+                    <button class="download-btn" onclick="downloadTranscript()">Download Transcript</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('transcript-form');
+        const loadingContainer = document.getElementById('loading-container');
+        const loadingProgress = document.getElementById('loading-progress');
+        const progressPercentage = document.getElementById('progress-percentage');
+        
+        form.onsubmit = function(e) {
+            loadingContainer.style.display = 'block';
+            simulateProgress();
+        };
+
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 1;
+                if (progress <= 100) {
+                    loadingProgress.style.width = `${progress}%`;
+                    progressPercentage.textContent = `${progress}%`;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 150); // Adjust timing as needed
+        }
+
+        function downloadSummary() {
+            const summary = document.querySelector('.output p').textContent;
+            window.location.href = `/download_summary?summary=${encodeURIComponent(summary)}`;
+        }
+
+        function downloadTranscript() {
+            const transcript = document.querySelectorAll('.output')[1].querySelector('p').textContent;
+            window.location.href = `/download_transcript?transcript=${encodeURIComponent(transcript)}`;
+        }
+    </script>
+</body>
+</html>
